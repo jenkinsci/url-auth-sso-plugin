@@ -1,0 +1,7 @@
+<?jelly escape-by-default='true'?>
+<!--
+  This view is used to render the installed plugins page.
+-->
+<div>
+  Allows users to be logged in to Jenkins automatically when they are logged into another site.
+</div>

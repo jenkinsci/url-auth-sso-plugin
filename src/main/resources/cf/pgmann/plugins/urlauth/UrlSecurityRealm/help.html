@@ -1,0 +1,14 @@
+<div>
+  A GET request will be sent to the Target URL specified.<br>
+  The cookie header sent by the client to Jenkins will be sent to the Target URL in order to authenticate.<br>
+  It is expected that an identifying cookie such as a Session ID will be sent that is shared between the two sites.
+  
+  <p>
+  By default, the server is expected to respond with a JSON response in the following format if the user is authenticated correctly:<br>
+  <span style="font-family: monospace;">{"user_name": "&lt;raw name>", "display_name": "[display name]", "public_email": "[email]"}</span><br>
+  The server is expected to return a <span style="font-family: monospace;">200 (OK)</span> status code if the login is successful, and <span style="font-family: monospace;">401 (Unauthorized)</span> otherwise.
+  </p>
+  
+  Only the <span style="font-family: monospace;">user_name</span> key and value are required; the others will be used if available.<br>
+  The user details sent back from the Target URL will overwrite the user's current settings, to keep them in sync, when the user logs in.
+</div>
