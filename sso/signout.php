@@ -1,4 +1,4 @@
-<?
+<?php
 // Signs the user out completely by deleting all data from the current session.
 session_start();
 $_SESSION = array();

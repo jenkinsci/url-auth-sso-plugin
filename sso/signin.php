@@ -7,8 +7,8 @@ session_start();
 
 // Register a new application at https://github.com/settings/developers
 // The Authorization callback URL should point to this page.
-$ghClientId = "CHANGE ME";		// CLIENT ID
-$ghClientSecret = "CHANGE ME";	// CLIENT SECRET
+$ghClientId = "CHANGE ME";     // CLIENT ID
+$ghClientSecret = "CHANGE ME"; // CLIENT SECRET
 
 // 2. Exchange auth code for token
 if(isset($_GET['code'])) {
@@ -29,10 +29,10 @@ if(isset($_GET['code'])) {
   $user = apiRequest("https://api.github.com/user");
   
   // SESSION DATA
-  // "user_name":		Used for raw login names, not display ones (prevents the security risk). User names must be unique.
-  // "display_name":	Display Names aren't unique - they can be changed by the user to anything.
-  // "public_email":	If the user has an email address, use it, or default to the raw username at GitHub noreply.
-  // "profile_image":	Holds the link to the user's profile image.
+  // "user_name":     Used for raw login names, not display ones (prevents the security risk). User names must be unique.
+  // "display_name":  Display Names aren't unique - they can be changed by the user to anything.
+  // "public_email":  If the user has an email address, use it, or default to the raw username at GitHub noreply.
+  // "profile_image": Holds the link to the user's profile image.
   $_SESSION['user_name'] = $user->login;
   $_SESSION['display_name'] = $user->name != null ? $user-> name : $user->login;
   $_SESSION['public_email'] = $user->email != null ? $user-> email : $user->login."@users.noreply.github.com";
