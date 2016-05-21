@@ -56,7 +56,9 @@ public class UrlSecurityRealm extends SecurityRealm implements UserDetailsServic
 		}, new UserDetailsService() {
 			@Override
 			public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DataAccessException {
-				return ((UrlAuthToken)SecurityContextHolder.getContext().getAuthentication()).getUserDetails();
+				Authentication a = SecurityContextHolder.getContext().getAuthentication();
+				if(a instanceof UrlAuthToken) return ((UrlAuthToken)a).getUserDetails();
+				return new UrlAuthUserDetails(username, username, ""); // Fixes bug which causes a FAILED Job Build Status.
 			}
 		});
 	}
