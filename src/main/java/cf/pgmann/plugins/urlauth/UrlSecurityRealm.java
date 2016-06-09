@@ -33,14 +33,16 @@ import hudson.tasks.Mailer;
 import jenkins.model.Jenkins;
 
 public class UrlSecurityRealm extends SecurityRealm implements UserDetailsService {
-	public final String targetUrl, userNameKey, displayNameKey, emailKey;
-	public static final String DEFAULT_USERNAME_KEY="user_name", DEFAULT_DISPLAYNAME_KEY="display_name", DEFAULT_EMAIL_KEY="public_email";
+	public final String targetUrl, ssoLoginUrl, userNameKey, displayNameKey, emailKey;
+	public static final String DEFAULT_USERNAME_KEY = "user_name", DEFAULT_DISPLAYNAME_KEY = "display_name", DEFAULT_EMAIL_KEY = "public_email";
+	public static final String REFERER_KEY = UrlSecurityRealm.class.getName()+".referer";
 	protected static UrlSecurityRealm self;
 
 	@DataBoundConstructor
-	public UrlSecurityRealm(String targetUrl, String userNameKey, String displayNameKey, String emailKey) {
+	public UrlSecurityRealm(String targetUrl, String ssoLoginUrl, String userNameKey, String displayNameKey, String emailKey) {
 		self = this;
 		this.targetUrl = targetUrl;
+		this.ssoLoginUrl = ssoLoginUrl;
 		this.userNameKey = userNameKey;
 		this.displayNameKey = displayNameKey;
 		this.emailKey = emailKey;
@@ -76,7 +78,7 @@ public class UrlSecurityRealm extends SecurityRealm implements UserDetailsServic
 				SecurityContext c = SecurityContextHolder.getContext();
 
 				HttpServletRequest r = (HttpServletRequest)request;
-				if(r.getCookies() != null) {
+				if(r.getCookies() != null && targetUrl != null && !targetUrl.isEmpty()) {
 					String cookies = r.getHeader("Cookie");
 					UrlAuthToken t = new UrlAuthToken(cookies);
 					if(t.isAuthenticated()) {
@@ -116,20 +118,24 @@ public class UrlSecurityRealm extends SecurityRealm implements UserDetailsServic
 	}
 
 	public HttpResponse doLogin(StaplerRequest request, @Header("Referer") String referer, @Header("Cookie") String cookies) throws IOException {
+		// The doFilter() method will run before this and try to authenticate the user.
 		self=this;
-		UrlAuthToken t = new UrlAuthToken(cookies);
-		if(t.isAuthenticated()) {
-			SecurityContextHolder.getContext().setAuthentication(t);
-			User u = User.current();
-			if(u != null) {
-				u.setFullName(t.getUserDetails().getDisplayName());
-				if(!t.getUserDetails().getEmail().isEmpty()) u.addProperty(new Mailer.UserProperty(t.getUserDetails().getEmail()));
-			}
+		
+		if(SecurityContextHolder.getContext().getAuthentication().equals(Jenkins.ANONYMOUS)) {
+			// If the user still isn't authenticated - redirect to the SSO Login URL so they can log in.
+			if(ssoLoginUrl == null || ssoLoginUrl.isEmpty())
+				throw new IllegalArgumentException("Please set the authentication Login URL in Jenkins global security configuration.");
+			
+			request.getSession().setAttribute(REFERER_KEY, referer); // save the previous page
+			return new HttpRedirect(ssoLoginUrl);
+		} else {
+			// The user has now been successfully authenticated - send them back to where they were before clicking login (as accurately as possible)
+			// Try to return to the session saved referer, the referer or the context root (in this order of preference)
+			Object savedReferer = request.getSession().getAttribute(REFERER_KEY);
+			if(savedReferer instanceof String && !((String)savedReferer).isEmpty()) return new HttpRedirect((String)savedReferer);
+			else if(referer != null && !referer.isEmpty()) return new HttpRedirect(referer);
+			else return HttpRedirect.CONTEXT_ROOT;
 		}
-
-		// Return to previous location (or the Jenkins context's root if no referrer is set)
-		if(referer == null || referer.isEmpty()) return HttpRedirect.CONTEXT_ROOT;
-		return new HttpRedirect(referer);
 	}
 
 	@Extension

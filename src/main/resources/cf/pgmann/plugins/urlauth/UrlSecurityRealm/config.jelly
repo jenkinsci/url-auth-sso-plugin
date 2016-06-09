@@ -13,6 +13,9 @@
   <f:entry title="Target URL" field="targetUrl">
     <f:textbox />
   </f:entry>
+  <f:entry title="Login URL" field="ssoLoginUrl">
+  	<f:textbox />
+  </f:entry>
   <f:entry title="Username Key" field="userNameKey">
     <f:textbox default="${descriptor.getDefaultUserNameKey()}" />
   </f:entry>

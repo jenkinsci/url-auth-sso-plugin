@@ -24,7 +24,7 @@ public class UrlAuthToken extends AbstractAuthenticationToken {
 		authTime=System.nanoTime();
 		this.cookies = cookies;
 		if(UrlSecurityRealm.self.targetUrl == null || UrlSecurityRealm.self.targetUrl.isEmpty())
-			throw new IllegalArgumentException("The Target URL to authenticate with is blank!");
+			throw new IllegalArgumentException("Please set the authentication Target URL in Jenkins global security configuration.");
 
 		// Try to authenticate using cookies
 		HttpGet get = new HttpGet(UrlSecurityRealm.self.targetUrl);
