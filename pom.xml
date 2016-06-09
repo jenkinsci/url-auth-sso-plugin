@@ -24,7 +24,7 @@
 	</properties>
 
 	<name>URL Auth Plugin</name>
-	<url>https://wiki.jenkins-ci.org/display/JENKINS/URL+Auth+Plugin</url>
+	<url>https://wiki.jenkins-ci.org/display/JENKINS/URL+Auth+SSO+Plugin</url>
 	<licenses>
 		<license>
 			<name>MIT License</name>
