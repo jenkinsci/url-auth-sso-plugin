@@ -32,16 +32,4 @@ public class UrlAuthUserDetails extends User implements UserDetails {
 	public void setEmail(String email) {
 		this.email = email;
 	}
-	
-	@Override
-	public boolean equals(Object that) {
-		if(!(that instanceof UrlAuthUserDetails)) return false;
-		UrlAuthUserDetails user = (UrlAuthUserDetails) that;
-		
-		if(!userName.equals(user.userName)) return false;
-		if(!displayName.equals(user.displayName)) return false;
-		if(!email.equals(user.email)) return false;
-		
-		return super.equals(that);
-	}
 }
