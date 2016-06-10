@@ -36,11 +36,10 @@ public class UrlSecurityRealm extends SecurityRealm implements UserDetailsServic
 	public final String targetUrl, ssoLoginUrl, userNameKey, displayNameKey, emailKey;
 	public static final String DEFAULT_USERNAME_KEY = "user_name", DEFAULT_DISPLAYNAME_KEY = "display_name", DEFAULT_EMAIL_KEY = "public_email";
 	public static final String REFERER_KEY = UrlSecurityRealm.class.getName()+".referer";
-	protected static UrlSecurityRealm self;
 
 	@DataBoundConstructor
 	public UrlSecurityRealm(String targetUrl, String ssoLoginUrl, String userNameKey, String displayNameKey, String emailKey) {
-		self = this;
+		//System.out.println("[x] UrlSecurityRealm() this: "+this.hashCode()); // debug
 		this.targetUrl = targetUrl;
 		this.ssoLoginUrl = ssoLoginUrl;
 		this.userNameKey = userNameKey;
@@ -57,10 +56,10 @@ public class UrlSecurityRealm extends SecurityRealm implements UserDetailsServic
 			}
 		}, new UserDetailsService() {
 			@Override
-			public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DataAccessException {
+			public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException, DataAccessException {
 				Authentication a = SecurityContextHolder.getContext().getAuthentication();
 				if(a instanceof UrlAuthToken) return ((UrlAuthToken)a).getUserDetails();
-				return new UrlAuthUserDetails(username, username, ""); // Fixes bug which causes a FAILED Job Build Status.
+				return new UrlAuthUserDetails(userName, userName, ""); // Fixes bug which causes a FAILED (Maven) Job Build Status.
 			}
 		});
 	}
@@ -74,13 +73,13 @@ public class UrlSecurityRealm extends SecurityRealm implements UserDetailsServic
 
 			@Override
 			public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-				self=UrlSecurityRealm.this;
+				//System.out.println("doFilter() this: "+this.hashCode()); // debug
 				SecurityContext c = SecurityContextHolder.getContext();
 
 				HttpServletRequest r = (HttpServletRequest)request;
 				if(r.getCookies() != null && targetUrl != null && !targetUrl.isEmpty()) {
 					String cookies = r.getHeader("Cookie");
-					UrlAuthToken t = new UrlAuthToken(cookies);
+					UrlAuthToken t = new UrlAuthToken(cookies, UrlSecurityRealm.this);
 					if(t.isAuthenticated()) {
 						c.setAuthentication(t);
 						User u = User.current();
@@ -119,7 +118,7 @@ public class UrlSecurityRealm extends SecurityRealm implements UserDetailsServic
 
 	public HttpResponse doLogin(StaplerRequest request, @Header("Referer") String referer, @Header("Cookie") String cookies) throws IOException {
 		// The doFilter() method will run before this and try to authenticate the user.
-		self=this;
+		//System.out.println("[x] doLogin() this: "+this.hashCode()); // debug
 		
 		if(SecurityContextHolder.getContext().getAuthentication().equals(Jenkins.ANONYMOUS)) {
 			// If the user still isn't authenticated - redirect to the SSO Login URL so they can log in.

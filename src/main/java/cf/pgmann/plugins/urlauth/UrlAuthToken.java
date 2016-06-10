@@ -16,18 +16,20 @@ import hudson.security.SecurityRealm;
 
 public class UrlAuthToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = 1L;
-	private String userName="", displayName="", email="", cookies;
+	private String userName="", displayName="", email="";
+	private String cookies;
+	private UrlAuthUserDetails user;
 	private final long authTime; // the time, in nanoseconds, the auth token was constructed at (just before authentication)
 
-	public UrlAuthToken(String cookies) {
+	public UrlAuthToken(String cookies, UrlSecurityRealm realm) {
 		super(new GrantedAuthority[]{});
 		authTime=System.nanoTime();
 		this.cookies = cookies;
-		if(UrlSecurityRealm.self.targetUrl == null || UrlSecurityRealm.self.targetUrl.isEmpty())
+		if(realm.targetUrl == null || realm.targetUrl.isEmpty())
 			throw new IllegalArgumentException("Please set the authentication Target URL in Jenkins global security configuration.");
 
 		// Try to authenticate using cookies
-		HttpGet get = new HttpGet(UrlSecurityRealm.self.targetUrl);
+		HttpGet get = new HttpGet(realm.targetUrl);
 		get.addHeader("Cookie", cookies);
 		HttpClient client = HttpClientBuilder.create().build();
 		HttpResponse response = null;
@@ -45,17 +47,17 @@ public class UrlAuthToken extends AbstractAuthenticationToken {
 				HashMap<?, ?> json = (HashMap<?, ?>) JSON.parse(responseText);
 
 				// Store downloaded user info
-				if(json.containsKey(UrlSecurityRealm.self.userNameKey) && json.get(UrlSecurityRealm.self.userNameKey) instanceof String) { // userName: REQUIRED
-					userName = (String) json.get(UrlSecurityRealm.self.userNameKey);
+				if(json.containsKey(realm.userNameKey) && json.get(realm.userNameKey) instanceof String) { // userName: REQUIRED
+					userName = (String) json.get(realm.userNameKey);
 					setAuthenticated(true);
 				}
-				if(json.containsKey(UrlSecurityRealm.self.displayNameKey) && json.get(UrlSecurityRealm.self.displayNameKey) instanceof String) { // displayName
-					displayName = (String) json.get(UrlSecurityRealm.self.displayNameKey);
+				if(json.containsKey(realm.displayNameKey) && json.get(realm.displayNameKey) instanceof String) { // displayName
+					displayName = (String) json.get(realm.displayNameKey);
 				} else {
 					displayName = userName;
 				}
-				if(json.containsKey(UrlSecurityRealm.self.emailKey) && json.get(UrlSecurityRealm.self.emailKey) instanceof String) { // email
-					email = (String) json.get(UrlSecurityRealm.self.emailKey);
+				if(json.containsKey(realm.emailKey) && json.get(realm.emailKey) instanceof String) { // email
+					email = (String) json.get(realm.emailKey);
 				}
 			}
 		}
@@ -77,7 +79,8 @@ public class UrlAuthToken extends AbstractAuthenticationToken {
 	}
 
 	public UrlAuthUserDetails getUserDetails() {
-		return new UrlAuthUserDetails(userName, displayName, email);
+		if(user==null) user = new UrlAuthUserDetails(userName, displayName, email);
+		return user;
 	}
 	public long getAuthTime() {
 		return authTime;
